@@ -1,0 +1,343 @@
+package com.company;
+
+import java.util.*;
+
+
+public class Main {
+    static class node_tree {
+        public static ArrayList<Main.Node> nodetree = new ArrayList<Main.Node>();
+        public static ArrayList<String> result = new ArrayList<>();
+        public static void empty() {
+            nodetree.removeAll(nodetree);
+        }
+
+        public static void reset() {
+            for (int i = 0; i < nodetree.size(); i++) {
+                nodetree.get(i).is_in_features = 0;
+            }
+        }
+    }
+
+    static class Node {
+        String name;
+        Node parent;
+        int relation = 0 , is_in_features = 0;
+        Node(String str, Node p, int r) {
+            this.name = str;
+            this.parent = p;
+            this.relation = r;
+        }
+    }
+
+    public static void convert_input1(ArrayList<String> arr) {
+        for (int i = 0; i < arr.size(); i++) {
+            parse1(arr.get(i));
+        }
+    }
+
+    public static void convert_input2(ArrayList<String> arr) {
+        for (int i = 0; i < arr.size(); i++) {
+            parse2(arr.get(i));
+            node_tree.reset();
+        }
+    }
+
+    public static void parse1(String str) {
+        String[] root = new String[0];
+        String[] mandatory = new String[0];
+        String[] or = new String[0];
+        String[] xor = new String[0];
+        str = str.trim().replaceAll("\\s+", "");
+        Node N = null;
+        if (!(str.contains("="))) { //if the tree has only 1 Node
+            N = new Node(str, null, -1);
+            node_tree.nodetree.add(N);
+        } else {
+            root = str.split("=", 2);
+            if (node_tree.nodetree.size() == 0) {
+                N = new Node(root[0], null, -1);
+                node_tree.nodetree.add(N);
+            }
+            else{
+                boolean is_new = true; // is true if the Node hasn't been defined yet, and if it has, just edits its information
+                for (int i = 0; i < node_tree.nodetree.size(); i++) {
+                    if (node_tree.nodetree.get(i).name.equals(root[0]))
+                        is_new = false;
+                    break;
+                }
+                if (is_new) {
+                    N= new Node(root[0], null, -1);
+                    node_tree.nodetree.add(N);
+                }
+            }
+            if (root[1].contains("+")) {
+                mandatory = root[1].split("\\+", 0);
+                for (int i = 0; i < mandatory.length; i++) {
+                    boolean is_new = true;
+                    for (int j = 0; j < node_tree.nodetree.size(); j++) {
+                        if ((mandatory[i]).equals(node_tree.nodetree.get(j).name)) {
+                            is_new = false;
+                            node_tree.nodetree.get(j).parent = N;
+                            break;
+                        }
+                        if(mandatory[i].equals('?'+node_tree.nodetree.get(j).name)){
+                            is_new =false;
+                            node_tree.nodetree.get(j).parent = N;
+                            node_tree.nodetree.get(j).relation =3;
+                            break;
+                        }
+                    }
+                    if (is_new){
+                        for (int j = 0; j < node_tree.nodetree.size(); j++)
+                            if ((node_tree.nodetree.get(j).name).equals(root[0])) {
+                                Node N1 = new Node(mandatory[i], node_tree.nodetree.get(j), 0);
+                                if (mandatory[i].charAt(0) == '?') {
+                                    N1.relation = 3;
+                                    N1.name = mandatory[i].substring(1, mandatory[i].length());
+                                }
+                                node_tree.nodetree.add(N1);
+                                break;
+                            }
+                    }
+                }
+            }
+            if (root[1].contains("^")) {
+                xor = root[1].split("\\^", 0);
+                for (int i = 0; i < xor.length; i++) {
+                    boolean is_new = true;
+                    for (int j = 0; j < node_tree.nodetree.size(); j++) {
+                        if ((node_tree.nodetree.get(j).name).equals(xor[i])) {
+                            is_new = false;
+                            node_tree.nodetree.get(j).parent = N;
+                            break;
+                        }
+                    }
+                    if (is_new ) {
+                        for (int j = 0; j < node_tree.nodetree.size(); j++)
+                            if ((node_tree.nodetree.get(j).name).equals(root[0])) {
+                                Node N1= new Node(xor[i], node_tree.nodetree.get(j), 1);
+                                node_tree.nodetree.add(N1);
+                                break;
+                            }
+                    }
+                }
+            }
+            if (root[1].contains("|")) {
+                or = root[1].split("\\|", 0);
+                for (int i = 0; i < or.length; i++) {
+                    boolean is_new = true;
+                    for (int j = 0; j < node_tree.nodetree.size(); j++) {
+                        if ((node_tree.nodetree.get(j).name).equals(or[i])) {
+                            is_new =false;
+                            node_tree.nodetree.get(j).parent = N;
+                            break;
+                        }
+                    }
+                    if (is_new == true) {
+                        for (int j = 0; j < node_tree.nodetree.size(); j++)
+                            if ((node_tree.nodetree.get(j).name).equals(root[0])) {
+                                Node N1 = new Node(or[i], node_tree.nodetree.get(j), 2);
+                                node_tree.nodetree.add(N1);
+                                break;
+                            }
+                    }
+                }
+
+            }
+            if (!((root[1].contains("|")) || (root[1].contains("^")) || (root[1].contains("+")))) {
+                boolean is_new =true;
+                for (int i = 0; i < node_tree.nodetree.size(); i++) {
+                    if (node_tree.nodetree.get(i).name.equals(root[1])) {
+                        is_new =false;
+                        node_tree.nodetree.get(i).parent = N;
+                        node_tree.nodetree.get(i).relation = 0;
+                        break;
+                    }
+                    if (('?'+ node_tree.nodetree.get(i).name).equals(root[1])){
+                        is_new = false;
+                        node_tree.nodetree.get(i).parent = N;
+                        node_tree.nodetree.get(i).relation =3;
+                        break;
+                    }
+                }
+                if (is_new ) {
+                    for (int i = 0; i < node_tree.nodetree.size(); i++) {
+                        if ((node_tree.nodetree.get(i).name).equals(root[0])) {
+                            Node N1 = new Node(root[1], node_tree.nodetree.get(i), 0);
+                            if (root[1].charAt(0) == '?') {
+                                N1.relation = 3;
+                                N1.name = root[1].substring(1, root[1].length());
+                            }
+                            node_tree.nodetree.add(N1);
+                            break;
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+
+    public static void parse2(String str) {
+        String[] testcase = new String[0];
+        str = str.trim().replaceAll("\\s+", "");
+        if(str.length()>2) {
+            str = str.substring(1, str.length() - 1);
+        }
+        else{
+            str =" ";
+        }
+        testcase = str.split(",", 0);
+        node_tree.result.add(check_test(testcase));
+    }
+
+
+    public static String check_test(String[] arr) {
+        ArrayList<String> mandantory = new ArrayList();
+        ArrayList<String> xor = new ArrayList();
+        ArrayList<String> or= new ArrayList<>();
+        ArrayList<String> optional = new ArrayList<>();
+        if(arr.length ==1){
+            if (arr[0] == " "){
+                return "Invalid";
+            }
+        }
+        for(int i=0 ;i <arr.length; i++){
+            mandantory.add(arr[i]);
+            or.add(arr[i]);
+            xor.add(arr[i]);
+            optional.add(arr[i]);
+            for(int k = 0 ; k< node_tree.nodetree.size();k++){
+                if(arr[i].equals(node_tree.nodetree.get(k).name)){
+                    for(int l =0 ;l<node_tree.nodetree.size();l++){
+                        if(node_tree.nodetree.get(l).relation !=-1) {
+                            if (node_tree.nodetree.get(l).parent == node_tree.nodetree.get(k)) {
+                                if(node_tree.nodetree.get(l).relation == 0){
+                                    mandantory.add(node_tree.nodetree.get(l).name);
+                                }
+                                if(node_tree.nodetree.get(l).relation == 1){
+                                    xor.add(node_tree.nodetree.get(l).name);
+                                }
+                                if(node_tree.nodetree.get(l).relation == 2){
+                                    or.add(node_tree.nodetree.get(l).name);
+                                }
+                                if(node_tree.nodetree.get(l).relation == 3){
+                                    optional.add(node_tree.nodetree.get(l).name);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            for(int m =0 ;m<mandantory.size();m++){
+                if (check(arr, mandantory.get(m)) == false){
+                    mandantory.removeAll(mandantory);
+                    or.removeAll(or);
+                    xor.removeAll(xor);
+                    optional.removeAll(optional);
+                    return "Invalid";
+                }
+            }
+
+            if (or.size() >1) {
+                int count_or =0;
+                for (int o = 0; o < or.size(); o++) {
+                    if (check(arr, or.get(o))) {
+                        count_or++;
+
+                    }
+
+                }
+                if(count_or == 1 ){
+                    mandantory.removeAll(mandantory);
+                    or.removeAll(or);
+                    xor.removeAll(xor);
+                    optional.removeAll(optional);
+                    return "Invalid";
+                }
+            }
+            if(xor.size() >1) {
+                int count_xor =0;
+                for (int xo = 0; xo < xor.size(); xo++) {
+                    if (check(arr, xor.get(xo))) {
+                        count_xor++;
+                    }
+                }
+                if(count_xor != 2 ){
+                    mandantory.removeAll(mandantory);
+                    or.removeAll(or);
+                    xor.removeAll(xor);
+                    optional.removeAll(optional);
+                    return "Invalid";
+                }
+            }
+            mandantory.removeAll(mandantory);
+            or.removeAll(or);
+            xor.removeAll(xor);
+            optional.removeAll(optional);
+        }
+        for(int i =0 ;i<arr.length;i++){
+            for(int j =0;j<node_tree.nodetree.size();j++){
+                if(node_tree.nodetree.get(j).name.equals(arr[i])){
+                    if(node_tree.nodetree.get(j).parent !=null) {
+                        if (check(arr, node_tree.nodetree.get(j).parent.name) == false) {
+                            return "Invalid";
+                        }
+                    }
+                }
+            }
+        }
+        return "Valid";
+    }
+
+    public static Boolean check(String[] arr, String str){
+        for (int i = 0;i<arr.length;i++) {
+            if (arr[i].equals(str)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void main(String[] args) {
+        Scanner scan = new Scanner(System.in);
+        String str = "";
+        ArrayList<String> input1 = new ArrayList<>();
+        ArrayList<String> input2 = new ArrayList<>();
+        Boolean input1_done = false;
+
+        while (!(str.equals("###"))) {
+            str = scan.nextLine();
+
+            if (!(str.equals("#")) && input1_done == false)
+                input1.add(str);
+
+            if (str.equals("#")) {
+                convert_input1(input1);
+                input1_done = true;
+                input1.removeAll(input1);
+            }
+
+            if (input1_done && !(str.equals("##")) && !(str.equals("#"))){
+                input2.add(str);
+            }
+            if (str.equals("##")) {
+                convert_input2(input2);
+                node_tree.result.add("+++");
+                input2.removeAll(input2);
+                node_tree.empty();
+                input1_done = false;
+            }
+        }
+        for(int i =0;i<node_tree.result.size();i++){
+            System.out.print(node_tree.result.get(i));
+            if(i !=node_tree.result.size()-1) {
+                System.out.print("\n");
+            }
+        }
+    }
+}
+
+
