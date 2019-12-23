@@ -2,19 +2,12 @@ package com.company;
 
 import java.util.*;
 
-
 public class Main {
     static class node_tree {
         public static ArrayList<Main.Node> nodetree = new ArrayList<Main.Node>();
         public static ArrayList<String> result = new ArrayList<>();
         public static void empty() {
             nodetree.removeAll(nodetree);
-        }
-
-        public static void reset() {
-            for (int i = 0; i < nodetree.size(); i++) {
-                nodetree.get(i).is_in_features = 0;
-            }
         }
     }
 
@@ -38,145 +31,123 @@ public class Main {
     public static void convert_input2(ArrayList<String> arr) {
         for (int i = 0; i < arr.size(); i++) {
             parse2(arr.get(i));
-            node_tree.reset();
         }
     }
-
     public static void parse1(String str) {
         String[] root = new String[0];
         String[] mandatory = new String[0];
         String[] or = new String[0];
         String[] xor = new String[0];
         str = str.trim().replaceAll("\\s+", "");
-        Node N = null;
         if (!(str.contains("="))) { //if the tree has only 1 Node
-            N = new Node(str, null, -1);
+            Node N = new Node(str, null, -1);
             node_tree.nodetree.add(N);
         } else {
-            root = str.split("=", 2);
-            if (node_tree.nodetree.size() == 0) {
-                N = new Node(root[0], null, -1);
-                node_tree.nodetree.add(N);
+            root = str.split("=",2);
+            Node a = new Node(root[0], null,-1);
+            boolean is_new = true;
+            for(int i =0 ; i<node_tree.nodetree.size();i++){
+                if(node_tree.nodetree.get(i).name.equals(root[0])) {
+                    is_new = false;
+                    a = node_tree.nodetree.get(i);
+                }
             }
-            else{
-                boolean is_new = true; // is true if the Node hasn't been defined yet, and if it has, just edits its information
-                for (int i = 0; i < node_tree.nodetree.size(); i++) {
-                    if (node_tree.nodetree.get(i).name.equals(root[0]))
-                        is_new = false;
-                    break;
-                }
-                if (is_new) {
-                    N= new Node(root[0], null, -1);
-                    node_tree.nodetree.add(N);
-                }
+            if(is_new){
+                node_tree.nodetree.add(a);
             }
             if (root[1].contains("+")) {
-                mandatory = root[1].split("\\+", 0);
-                for (int i = 0; i < mandatory.length; i++) {
-                    boolean is_new = true;
-                    for (int j = 0; j < node_tree.nodetree.size(); j++) {
-                        if ((mandatory[i]).equals(node_tree.nodetree.get(j).name)) {
+                mandatory = root[1].split("\\+",0);
+                for(int i = 0;i<mandatory.length;i++){
+                    is_new =true;
+                    for(int j =0;j<node_tree.nodetree.size();j++){
+                        if(node_tree.nodetree.get(j).name.equals(mandatory[i])){
                             is_new = false;
-                            node_tree.nodetree.get(j).parent = N;
-                            break;
+                            node_tree.nodetree.get(j).parent = a ;
+                            node_tree.nodetree.get(j).relation = 0;
                         }
                         if(mandatory[i].equals('?'+node_tree.nodetree.get(j).name)){
-                            is_new =false;
-                            node_tree.nodetree.get(j).parent = N;
-                            node_tree.nodetree.get(j).relation =3;
-                            break;
+                            is_new = false;
+                            node_tree.nodetree.get(j).parent = a;
+                            node_tree.nodetree.get(j).relation = 3;
                         }
                     }
-                    if (is_new){
-                        for (int j = 0; j < node_tree.nodetree.size(); j++)
-                            if ((node_tree.nodetree.get(j).name).equals(root[0])) {
-                                Node N1 = new Node(mandatory[i], node_tree.nodetree.get(j), 0);
-                                if (mandatory[i].charAt(0) == '?') {
-                                    N1.relation = 3;
-                                    N1.name = mandatory[i].substring(1, mandatory[i].length());
-                                }
-                                node_tree.nodetree.add(N1);
-                                break;
-                            }
+                    if(is_new){
+                        if(mandatory[i].charAt(0)=='?') {
+                            Node b = new Node(mandatory[i].substring(1), a, 3);
+                            node_tree.nodetree.add(b);
+                        }
+                        else {
+                            Node b = new Node(mandatory[i],a,0);
+                            node_tree.nodetree.add(b);
+                        }
+
                     }
                 }
             }
             if (root[1].contains("^")) {
-                xor = root[1].split("\\^", 0);
-                for (int i = 0; i < xor.length; i++) {
-                    boolean is_new = true;
-                    for (int j = 0; j < node_tree.nodetree.size(); j++) {
-                        if ((node_tree.nodetree.get(j).name).equals(xor[i])) {
+                xor = root[1].split("\\^",0);
+                for(int i = 0;i<xor.length;i++){
+                    is_new =true;
+                    for(int j =0;j<node_tree.nodetree.size();j++){
+                        if(node_tree.nodetree.get(j).name.equals(xor[i])){
                             is_new = false;
-                            node_tree.nodetree.get(j).parent = N;
-                            break;
+                            node_tree.nodetree.get(j).parent = a;
+                            node_tree.nodetree.get(j).relation = 1;
                         }
                     }
-                    if (is_new ) {
-                        for (int j = 0; j < node_tree.nodetree.size(); j++)
-                            if ((node_tree.nodetree.get(j).name).equals(root[0])) {
-                                Node N1= new Node(xor[i], node_tree.nodetree.get(j), 1);
-                                node_tree.nodetree.add(N1);
-                                break;
-                            }
+                    if(is_new){
+                        Node c =new Node(xor[i], a, 1);
+                        node_tree.nodetree.add(c);
                     }
                 }
             }
+
             if (root[1].contains("|")) {
-                or = root[1].split("\\|", 0);
-                for (int i = 0; i < or.length; i++) {
-                    boolean is_new = true;
-                    for (int j = 0; j < node_tree.nodetree.size(); j++) {
-                        if ((node_tree.nodetree.get(j).name).equals(or[i])) {
-                            is_new =false;
-                            node_tree.nodetree.get(j).parent = N;
-                            break;
+                or = root[1].split("\\|",0);
+                for(int i = 0;i<or.length;i++){
+                    is_new =true;
+                    for(int j =0;j<node_tree.nodetree.size();j++){
+                        if(node_tree.nodetree.get(j).name.equals(or[i])){
+                            is_new = false;
+                            node_tree.nodetree.get(j).parent= a;
+                            node_tree.nodetree.get(j).relation =2;
                         }
                     }
-                    if (is_new == true) {
-                        for (int j = 0; j < node_tree.nodetree.size(); j++)
-                            if ((node_tree.nodetree.get(j).name).equals(root[0])) {
-                                Node N1 = new Node(or[i], node_tree.nodetree.get(j), 2);
-                                node_tree.nodetree.add(N1);
-                                break;
-                            }
+                    if(is_new){
+                        Node d =new Node(or[i], a, 2);
+                        node_tree.nodetree.add(d);
                     }
                 }
-
             }
-            if (!((root[1].contains("|")) || (root[1].contains("^")) || (root[1].contains("+")))) {
-                boolean is_new =true;
-                for (int i = 0; i < node_tree.nodetree.size(); i++) {
-                    if (node_tree.nodetree.get(i).name.equals(root[1])) {
-                        is_new =false;
-                        node_tree.nodetree.get(i).parent = N;
-                        node_tree.nodetree.get(i).relation = 0;
-                        break;
-                    }
-                    if (('?'+ node_tree.nodetree.get(i).name).equals(root[1])){
-                        is_new = false;
-                        node_tree.nodetree.get(i).parent = N;
-                        node_tree.nodetree.get(i).relation =3;
-                        break;
-                    }
-                }
-                if (is_new ) {
-                    for (int i = 0; i < node_tree.nodetree.size(); i++) {
-                        if ((node_tree.nodetree.get(i).name).equals(root[0])) {
-                            Node N1 = new Node(root[1], node_tree.nodetree.get(i), 0);
-                            if (root[1].charAt(0) == '?') {
-                                N1.relation = 3;
-                                N1.name = root[1].substring(1, root[1].length());
-                            }
-                            node_tree.nodetree.add(N1);
-                            break;
-                        }
-                    }
-                }
 
+            if (!((root[1].contains("|")) || (root[1].contains("^")) || (root[1].contains("+")))) {
+                is_new =true;
+                for(int i = 0;i< node_tree.nodetree.size();i++){
+                    if(node_tree.nodetree.get(i).name.equals(root[1])){
+                        is_new= false;
+                        node_tree.nodetree.get(i).parent=a;
+                        node_tree.nodetree.get(i).relation = 0;
+                    }
+                    if(root[1].equals('?'+node_tree.nodetree.get(i).name)){
+                        is_new=false;
+                        node_tree.nodetree.get(i).parent = a;
+                        node_tree.nodetree.get(i).relation = 3;
+                    }
+                }
+                if(is_new){
+                    if(root[1].charAt(0) == '?') {
+                        Node e = new Node(root[1].substring(1), a, 3);
+                        node_tree.nodetree.add(e);
+                    }
+                    else{
+                        Node e = new Node(root[1], a, 0);
+                        node_tree.nodetree.add(e);
+                    }
+                }
             }
         }
     }
+
 
 
     public static void parse2(String str) {
@@ -197,7 +168,6 @@ public class Main {
         ArrayList<String> mandantory = new ArrayList();
         ArrayList<String> xor = new ArrayList();
         ArrayList<String> or= new ArrayList<>();
-        ArrayList<String> optional = new ArrayList<>();
         if(arr.length ==1){
             if (arr[0] == " "){
                 return "Invalid";
@@ -207,7 +177,6 @@ public class Main {
             mandantory.add(arr[i]);
             or.add(arr[i]);
             xor.add(arr[i]);
-            optional.add(arr[i]);
             for(int k = 0 ; k< node_tree.nodetree.size();k++){
                 if(arr[i].equals(node_tree.nodetree.get(k).name)){
                     for(int l =0 ;l<node_tree.nodetree.size();l++){
@@ -222,39 +191,30 @@ public class Main {
                                 if(node_tree.nodetree.get(l).relation == 2){
                                     or.add(node_tree.nodetree.get(l).name);
                                 }
-                                if(node_tree.nodetree.get(l).relation == 3){
-                                    optional.add(node_tree.nodetree.get(l).name);
-                                }
                             }
                         }
                     }
                 }
             }
-
             for(int m =0 ;m<mandantory.size();m++){
                 if (check(arr, mandantory.get(m)) == false){
                     mandantory.removeAll(mandantory);
                     or.removeAll(or);
                     xor.removeAll(xor);
-                    optional.removeAll(optional);
                     return "Invalid";
                 }
             }
-
             if (or.size() >1) {
                 int count_or =0;
                 for (int o = 0; o < or.size(); o++) {
                     if (check(arr, or.get(o))) {
                         count_or++;
-
                     }
-
                 }
                 if(count_or == 1 ){
                     mandantory.removeAll(mandantory);
                     or.removeAll(or);
                     xor.removeAll(xor);
-                    optional.removeAll(optional);
                     return "Invalid";
                 }
             }
@@ -269,14 +229,12 @@ public class Main {
                     mandantory.removeAll(mandantory);
                     or.removeAll(or);
                     xor.removeAll(xor);
-                    optional.removeAll(optional);
                     return "Invalid";
                 }
             }
             mandantory.removeAll(mandantory);
             or.removeAll(or);
             xor.removeAll(xor);
-            optional.removeAll(optional);
         }
         for(int i =0 ;i<arr.length;i++){
             for(int j =0;j<node_tree.nodetree.size();j++){
@@ -306,7 +264,7 @@ public class Main {
         String str = "";
         ArrayList<String> input1 = new ArrayList<>();
         ArrayList<String> input2 = new ArrayList<>();
-        Boolean input1_done = false;
+        boolean input1_done = false;
 
         while (!(str.equals("###"))) {
             str = scan.nextLine();
@@ -332,9 +290,11 @@ public class Main {
             }
         }
         for(int i =0;i<node_tree.result.size();i++){
-            System.out.print(node_tree.result.get(i));
-            if(i !=node_tree.result.size()-1) {
-                System.out.print("\n");
+            if(i != node_tree.result.size()-1) {
+                System.out.println(node_tree.result.get(i));
+            }
+            else{
+                System.out.print(node_tree.result.get(i));
             }
         }
     }
